@@ -18,6 +18,33 @@ import geopandas as gpd
 import psycopg2
 
 
+def check_files(
+	*args: str
+) -> None:
+	"""
+	Check whether or not the files exist on the system.
+
+	Parameters
+	----------
+		args : str or iterable of str
+			Files to be looked for on the system.
+	
+	Raises
+	------
+		FileNotFoundError: If one of the provided files is not found.
+
+	Examples
+	--------
+	If any of these files does not exist on the system, Python will
+	raise an error.
+	
+	>>> check_files("a.shp", "b.gpkg", "./c.shp", "d.txt")
+	"""
+	for f in args:
+		if not exists(f):
+			raise FileNotFoundError(f"'{f}' does not exist!")
+
+
 def extract_features(
 	gdf: gpd.GeoDataFrame, 
 	attribute: str, 
@@ -41,7 +68,27 @@ def extract_features(
 	-------
 		GeoDataFrame
 			GeoPandas dataframe with extracted features.
-		    
+	
+	Examples
+	--------
+	Create a geodataframe from a dictionary.
+
+	>>> d = {"a": [...], "b": [...], "c": [...], "geometry": [...]}
+	>>> data = gpd.GeoDataFrame(d, crs="EPSG:2154")
+	>>> data
+	 	a	b	c	geometry
+	0	0	0	1	...
+	1	1	2	1	...
+
+	Extract rows from `data` where the value associated with 
+	`query_column` is contained in the `categories` iterable.
+
+	>>> query_column = "b"
+	>>> categories = [1, 2, 3]
+	>>> ways = extract_features(data, query_column, categories)
+	>>> ways
+	 	a	b	c	geometry
+	1	1	2	1	...
 	"""
 	return gdf[gdf[attribute].isin(values)]
 
@@ -52,7 +99,8 @@ def subset_columns(
 	tgt_columns: Optional[Iterable[str]] = None
 ) -> gpd.GeoDataFrame:
 	"""
-	
+	Select a subset of columns from a GeoPandas dataframe.
+
 	Parameters
 	----------
 		gdf : GeoDataFrame
@@ -60,13 +108,45 @@ def subset_columns(
 		src_columns : iterable of str
 			Original names of the columns to be extracted.
 		tgt_columns : iterable of str, optional
-			Replacement names for those provided in src_columns.
-			They should be in the same order as that of src_columns.
+			Replacement names for those provided in `src_columns`.
+			They should be in the same order as that of `src_columns`.
 	
 	Returns
 	-------
 		GeoDataFrame
 			GeoPandas dataframe with the selected columns.
+	
+	Examples
+	--------
+	Create a geodataframe from a dictionary.
+
+	>>> d = {"a": [...], "b": [...], "c": [...], "geometry": [...]}
+	>>> data = gpd.GeoDataFrame(d, crs="EPSG:2154")
+	>>> data
+	 	a	b	c	geometry
+	0	0	0	1	...
+	1	1	2	1	...
+
+	Create a subset of `data` by extracting columns specified in
+	`src_columns`.
+
+	>>> src_columns = ["a", "b", "geometry"]
+	>>> ways = subset_columns(data, src_columns)
+	>>> ways
+	 	a	b	geometry
+	0	0	0	...
+	1	1	2	...
+
+	It is also possible to rename columns from `src_columns` by 
+	passing an iterable containing target names, and with a length equal
+	to that of `src_columns`.
+
+	>>> tgt_columns = ["y", "z", "geometry"]
+	>>> ways = subset_columns(data, src_columns, tgt_columns)
+	>>> ways
+	 	y	z	geometry
+	0	0	0	...
+	1	1	2	...
 	"""
 	gdf = gdf[src_columns]
 
@@ -76,24 +156,8 @@ def subset_columns(
 	return gdf
 
 
-def check_files(
-	*args: str
-) -> None:
-	"""
-	Check whether or not the files exist on the system.
-
-	Parameters
-	----------
-		args : str or iterable of str
-			Files to be looked for on the system.
-	"""
-	for f in args:
-		if not exists(f):
-			raise FileNotFoundError(f"'{f}' does not exist!")
-
-
 def create_spatial_index(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str
 ) -> None:
 	"""
@@ -101,10 +165,21 @@ def create_spatial_index(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to create an index.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Create a spatial index for the provided relation.
+
+	>>> create_spatial_index(cursor, "bd_topo")
 	"""
 	query = f"""
 	CREATE INDEX {relation}_geom_idx
@@ -116,7 +191,7 @@ def create_spatial_index(
 
 
 def get_geometry_type(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str
 ) -> Iterable[str]:
 	"""
@@ -124,7 +199,7 @@ def get_geometry_type(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to get the geometry type.
@@ -134,6 +209,19 @@ def get_geometry_type(
 		iterable of str
 			Iterable storing the geometry types of each feature in the 
 			relation.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Get geometry types for features contained in the provided relation.
+
+	>>> geometry_types = get_geometry_type(cursor, "communes")
+	>>> geometry_types
+	('ST_MultiPolygon',)
 	"""
 	query = f"""
 	SELECT DISTINCT ST_GeometryType(geometry)
@@ -155,7 +243,26 @@ def has_single_geometry_type(
 	----------
 		geometry_type : iterable of str
 			Tuple containing geometry type(s).
+	
+	Raises
+	------
+		ValueError: If there is more than one geometry type in the
+		provided iterable.
+	
+	Examples
+	--------
+	Get geometry types from a spatial relation.
 
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+	>>> geometry_types = get_geometry_type(cursor, "communes")
+
+	Check whether or not the spatial relation contains features with the
+	same geometry type.
+
+	>>> has_single_geometry_type(geometry_types)
+
+	If there is more than one geometry type, Python will raise an error.
 	"""
 	if len(geometry_type) > 1:
 		raise ValueError("Relations with more than a single geometry \
@@ -175,6 +282,32 @@ def convert_st_to_type(
 			String containing a PostGIS geometry type. 
 		allow_multi : bool, default True
 			Whether or not to allow multipart geometry.
+	
+	Returns
+	-------
+		str
+			A generic geometry type.
+	
+	Examples
+	--------
+	Get the geometry type of a spatial relation.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+	>>> geometry_types = get_geometry_type(cursor, "communes")
+	>>> geometry_types
+	('ST_MultiPolygon',)
+
+	Convert the PostGIS geometry type into a generic form.
+
+	>>> convert_st_to_type(geometry_types[0])
+	>>> 'MultiPolygon'
+
+	It is also possible to convert a multipart geometry to its
+	singlepart equivalent by setting `allow_multi` to False.
+
+	>>> convert_st_to_type(geometry_types[0], false)
+	>>> 'Polygon'	
 	"""
 	if geometry[:3] != "ST_":
 		raise ValueError("Input geometry type is not compatible with \
@@ -186,7 +319,7 @@ def convert_st_to_type(
 
 
 def get_srid(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str
 ) -> Union[str, int]:
 	"""
@@ -194,7 +327,7 @@ def get_srid(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to get the SRID.
@@ -214,7 +347,7 @@ def get_srid(
 
 
 def single_to_multi_geometry(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str
 ) -> None:
 	"""
@@ -223,7 +356,7 @@ def single_to_multi_geometry(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to convert singlepart 
@@ -238,7 +371,7 @@ def single_to_multi_geometry(
 
 
 def project_geometry(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str, 
 	srid: Union[str, int]
 ) -> None:
@@ -248,7 +381,7 @@ def project_geometry(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to get the SRID.
@@ -270,7 +403,7 @@ def project_geometry(
 
 
 def transform_3d_to_2d(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation: str
 ) -> None:
 	"""
@@ -278,7 +411,7 @@ def transform_3d_to_2d(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation : str
 			Name of the relation for which to remove the third 
@@ -314,7 +447,7 @@ def transform_3d_to_2d(
 
 
 def intersect_geometries(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation_a: str, 
 	relation_b: str, 
 	fields_a: Iterable[str] = [], 
@@ -329,7 +462,7 @@ def intersect_geometries(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation_a : str
 			Relation containing geometries to intersect with relation_b.
@@ -404,7 +537,7 @@ def intersect_geometries(
 
 
 def _intersect_geometries(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation_a: str, 
 	relation_b: str, 
 	fields_a: Iterable[str] = [], 
@@ -419,7 +552,7 @@ def _intersect_geometries(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation_a : str
 			Relation containing geometries to intersect with relation_b.
@@ -475,7 +608,7 @@ def _intersect_geometries(
 
 
 def aggregate_relations(
-	cursor: psycopg2.cursor, 
+	cursor: psycopg2.extensions.cursor, 
 	relation_a: str, 
 	relation_b: str, 
 	out_name: str, 
@@ -488,7 +621,7 @@ def aggregate_relations(
 
 	Parameters
 	----------
-		cursor : psycopg2.cursor
+		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation_a : str
 			Relation containing geometries to intersect with relation_b.
