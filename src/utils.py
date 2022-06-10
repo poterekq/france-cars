@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------
 
 """
-Utilities for processing spatial data with PostGIS backend.
+Utilities for processing spatial data with a PostGIS backend.
 """
 
 
@@ -336,6 +336,18 @@ def get_srid(
 	-------
 		str
 			SRID of the provided relation.
+
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Get the SRID from a spatial relation.
+
+	>>> get_srid(cursor, "communes")
+	2154
 	"""
 	query = f"""
 	SELECT DISTINCT ST_SRID(geometry)
@@ -361,6 +373,27 @@ def single_to_multi_geometry(
 		relation : str
 			Name of the relation for which to convert singlepart 
 			features to multipart features.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Get the geometry type of a spatial relation.
+
+	>>> get_geometry_type(cursor, "communes")
+	('ST_Polygon',)
+
+	Convert singleipart geometry to multipart geometry.
+
+	>>> single_to_multi_geometry(cursor, "communes")
+
+	Get the geometry type of the converted spatial relation.
+
+	>>> get_geometry_type(cursor, "communes")
+	('ST_MultiPolygon',)
 	"""
 	query = f"""
 	UPDATE public."{relation}"
@@ -387,6 +420,24 @@ def project_geometry(
 			Name of the relation for which to get the SRID.
 		srid : str or int
 			Target SRID.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Get the SRID of a spatial relation.
+
+	>>> get_srid(cursor, "communes")
+	4326
+
+	Reproject data from EPSG:4326 to EPSG:2154.
+
+	>>> project_geometry(cursor, "communes", 2154)
+	>>> get_srid(cursor, "communes")
+	2154
 	"""
 	geometry_types = get_geometry_type(cursor, relation)
 	has_single_geometry_type(geometry_types)
@@ -416,6 +467,17 @@ def transform_3d_to_2d(
 		relation : str
 			Name of the relation for which to remove the third 
 			dimension.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Remove the third dimension from a spatial relation.
+
+	>>> transform_3d_to_2d(cursor, "communes")
 	"""
 	geometry_types = get_geometry_type(cursor, relation)
 	has_single_geometry_type(geometry_types)
@@ -481,6 +543,50 @@ def intersect_geometries(
 		build_index : bool, default True
 			Whether or not to build a spatial index for the intersection
 			result. The option is not available for views.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Update the geometry of spatial relation `b` after intersecting it
+	with spatial relation `a`. In this following example, the only
+	information kept from both relations is the resulting geometry.
+
+	>>> intersect_geometries(cursor, "a", "b")
+
+	To create a new relation `c` instead of overwriting `b`, one may
+	specify the `out_name` attribute.
+
+	>>> intersect_geometries(cursor, "a", "b", out_name="c")
+
+	A table is created by default. However, when `out_name` is provided,
+	it is possible to set `as_view` to `True` in order to create a view
+	instead.
+
+	>>> intersect_geometries(
+		cursor, "a", "b", 
+		as_view=True, out_name="c"
+	)
+
+	In addition to the geometry resulting from the intersection of two
+	relations, one can also specify fields to keep. In this case, it is
+	preferable to remove the initial `geom` or `geometry` attributes
+	from both `fields_a` and `fields_b`. Indeed, other functions or GIS
+	softwares might be unsure whether to use the geometry resulting from
+	the intersection or that of the initial spatial relations.
+
+	Below, an example where the identifier from `a` and all attributes
+	from `b` are kept. Note that the initial geometry of both relations
+	was not included.
+
+	>>> intersect_geometries(
+		cursor, "a", "b", 
+		fields_a=["id"], 
+		fields_b=["x", "y", "z"]
+	)
 	"""
 	DIMENSION = {
 		"Point": 0,
@@ -624,25 +730,41 @@ def aggregate_relations(
 		cursor : psycopg2.extensions.cursor
 			Cursor bound to an open PostgreSQL connection.
 		relation_a : str
-			Relation containing geometries to intersect with relation_b.
+			Relation containing geometries to aggregate with relation_b.
 		relation_b : str
-			Relation containing geometries to intersect with relation_a.
-		out_name : str, optional
-			Name of the relation to create. By default, relation_b is
-			replaced with the intersection result.
+			Relation containing geometries to aggregate with relation_a.
+		out_name : str
+			Name of the relation to create.
 		as_view : bool, default False
 			Whether or not to create a view. When False, a table is 
 			created. When True, a view is created.
 		build_index : bool, default True
-			Whether or not to build a spatial index for the intersection
+			Whether or not to build a spatial index for the aggregation
 			result. The option is not available for views.
+	
+	Examples
+	--------
+	Create a cursor from an open PostgreSQL connection.
+
+	>>> connection = psycopg2.connect(...)
+	>>> cursor = connection.cursor()
+
+	Create a new spatial relation `c` from the union of two spatial
+	relations `a` and `b`.
+
+	>>> aggregate_relations(cursor, "a", "b", "c")
+
+	By default, a new table is created. But one might also want to
+	create a view. In this case, `as_view` must be set to `True`.
+
+	>>> aggregate_relations(cursor, "a", "b", "c", as_view=True)
 	"""
 	srid_a = get_srid(cursor, relation_a)
 	srid_b = get_srid(cursor, relation_b)
 
 	if srid_a != srid_b:
 		raise ValueError(f"Input geometries do not share \
-			the same SRID ({srid_a}, {srid_b})!")
+			the same SRID (a: {srid_a}, b: {srid_b})!")
 	
 	relation_type = "VIEW" if as_view else "TABLE"
 
