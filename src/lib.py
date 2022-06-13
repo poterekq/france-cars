@@ -3,19 +3,137 @@
 # ----------------------------------------------------------------------
 # Author: Quentin Poterek
 # Creation date: 08/06/2022
-# Version: 1.0
+# Version: 1.1
 #-----------------------------------------------------------------------
+
 
 """
 Utilities for processing spatial data with a PostGIS backend.
 """
 
 
+from dataclasses import dataclass
 from os.path import exists
 from typing import Iterable, Optional, Union
 
 import geopandas as gpd
 import psycopg2
+
+
+@dataclass
+class Credentials:
+	"""
+	A class used to store and format credentials for connecting to a
+	PostgreSQL database.
+
+	Attributes
+	---------- 
+		host : str, default 'localhost'
+			The host for the database.
+		user : str, default 'postgres'
+			The user to connect to the database.
+		password: str, default 'postgres'
+			The password used for connecting the user to the database.
+		database : str, default 'geodata'
+			The database to connect to.
+		port : str, default '5432'
+			The port used for accessing the database.
+	
+	Methods
+	-------
+	get_psycopg2_string()
+		Format credentials for psycopg2.
+	get_sqlalchmy_string()
+		Format credentials for sqlalchemy.
+	get_credentials(backend)
+		Format credentials for the input backend.
+	"""
+	host: str = "localhost"
+	user: str = "postgres"
+	password: str = "postgres"
+	database: str = "geodata"
+	port: str = "5432"
+
+
+	def get_psycopg2_string(self) -> str:
+		"""
+		Return a formatted string for connecting to a PostgreSQL
+		database using psycopg2.
+
+		Returns
+		-------
+			str
+				A formatted string ready to be passed to psycopg2.
+		"""
+		return (f"user={self.user} "
+		        f"password={self.password} "
+				f"host={self.host} "
+				f"port={self.port} "
+				f"dbname={self.database}")
+
+
+	def get_sqlalchmy_string(self) -> str:
+		"""
+		Return a formatted string for connecting to a PostgreSQL
+		database using sqlalchemy.
+
+		Returns
+		-------
+			str
+				A formatted string ready to be passed to sqlalchemy.
+		"""
+		return ("postgresql://"
+		        f"{self.user}"
+				f":{self.password}"
+				f"@{self.host}"
+				f":{self.port}"
+				f"/{self.database}")
+
+
+	def get_credentials(self, backend: str) -> str:
+		"""
+		Return a formatted string for connecting to a PostgreSQL 
+		database.
+
+		Parameters
+		----------
+			backend : str
+				The backend technology used for getting acces to a 
+				PostgreSQL session. Supported backends are psycopg2 and
+				sqlalchemy.
+
+		Returns
+		-------
+			str
+				A formatted string ready to be passed to a PostgreSQL
+				session manager for connecting to a database.
+		
+		Raises
+		------
+			ValueError: If the provided backend is not supported. 
+			Supported backends are psycopg2 and sqlalchemy.
+		
+		Examples
+		--------
+		Create an instance of the `Credentials` class.
+
+		>>> credentials = Credentials()
+
+		Return a formatted string from the instance's attributes.
+
+		>>> credentials.get_credentials("sqlalchemy")
+		postgresql://postgres:postgres@localhost:5432/geodata
+		"""
+		match backend:
+			case "sqlalchemy":
+				return self._get_sqlalchmy_string()
+			case "psycopg2":
+				return self._get_psycopg2_string()
+			case default:
+				raise ValueError((
+					f"'{backend}' is an unsupported backend. "
+					"Use either 'psycopg2' or 'sqlalchemy'."
+				))
 
 
 def check_files(
