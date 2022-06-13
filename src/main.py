@@ -61,10 +61,15 @@ QUERY_COLUMNS = {
 
 # Association between variable name and values for subsetting features
 QUERY_CATEGORIES = {
-	"corine": "",
-	"equipement_ign": "",
-	"equipement_osm": "",
-	"troncon_ign": "",
+	"corine": ["111", "112", "121", "122", "123", "124", 
+	    "131", "132", "133", "141", "142"],
+	"equipement_ign": ["Aire de repos ou de service", 
+		"Autre équipement", "Carrefour",  "Parking", "Péage", 
+		"Service dédié aux véhicules"],
+	"equipement_osm": ["fuel", "parking", "parking_multistorey", 
+		"parking_underground", "service"],
+	"troncon_ign": ["Bretelle", "Rond-point", "Route à 1 chaussée",
+		"Route à 2 chaussées", "Type autoroutier"],
 }
 
 
