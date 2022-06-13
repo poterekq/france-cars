@@ -33,7 +33,7 @@ from lib import *
 # ----------------------------------------------------------------------
 
 
-# Association between variable name and relation name 
+# Associate variable name with PostGIS relation name 
 RELATIONS = {
 	"commune": "commune",
 	"corine": "corine",
@@ -46,20 +46,20 @@ RELATIONS = {
 	"troncon_buffer": "troncon_buffer",
 }
 
-# Association between variable name and target GPKG layer name
+# Associate variable name with target GPKG layer name
 GPKG_LAYERS = {
 	"equipement_ign": "equipement_de_transport",
 	"troncon_ign": "troncon_de_route",
 }
 
-# Association between data provider and columns for creating subsets
+# Associate data provider with columns for querying and creating subsets
 QUERY_COLUMNS = {
 	"corine": "CODE_12",
 	"ign": "nature",
 	"osm": "fclass",
 }
 
-# Association between variable name and values for subsetting features
+# Associate variable name with values for subsetting features
 QUERY_CATEGORIES = {
 	"corine": ["111", "112", "121", "122", "123", "124", 
 	    "131", "132", "133", "141", "142"],
@@ -72,13 +72,39 @@ QUERY_CATEGORIES = {
 		"Route à 2 chaussées", "Type autoroutier"],
 }
 
+# Input columns to subset
+INPUT_COLUMNS = {
+	"corine": ["ID", "CODE_12", "geometry"],
+	"equipement_ign": ["cleabs", "nature", "geometry"],
+	"equipement_osm": ["osm_id", "fclass", "geometry"],
+	"troncon_ign": ["cleabs", "nature", "largeur_de_chaussee", 
+		"geometry"],
+}
+
+# Output names for subsetted columns
+OUTPUT_COLUMNS = {
+	"corine": ["id", "classe", "geometry"],
+	"equipement_osm": ["cleabs", "nature", "geometry"],
+	"troncon_ign": ["cleabs", "nature", "largeur", "geometry"],
+}
+
+# Spatial information for querying data
+TARGET_SRID = 2154
+DEPARTEMENT = 67
+
+# Filenames
+FILE_COMMUNE = "COMMUNE.shp"
+FILE_CORINE = "CLC12_FR.shp"
+FILE_IGN = "topo.gpkg"
+FILE_OSM = "gis_osm_traffic_a_free_1.shp"
+
 
 # ----------------------------------------------------------------------
 # PROCEDURE
 # ----------------------------------------------------------------------
 
 
-# Setup working directories
+# Setup working directories and paths
 
 current_directory = path.abspath(getcwd())
 if path.split(current_directory)[-1] != "src":
@@ -90,6 +116,13 @@ OUTPUT_DIRECTORY = path.join(path.dirname(current_directory), 'output')
 for directory in (INPUT_DIRECTORY, OUTPUT_DIRECTORY):
 	if not exists(directory):
 		mkdir(directory)
+
+PATH_COMMUNE = path.join(INPUT_DIRECTORY, FILE_COMMUNE)
+PATH_CORINE = path.join(INPUT_DIRECTORY, FILE_CORINE)
+PATH_IGN = path.join(INPUT_DIRECTORY, FILE_IGN)
+PATH_OSM = path.join(INPUT_DIRECTORY, FILE_OSM)
+
+check_files(PATH_COMMUNE, PATH_CORINE, PATH_IGN, PATH_OSM)
 
 # Get credentials for connecting to PostGIS database
 
