@@ -1,0 +1,1 @@
+DROP {0} IF EXISTS public."{1}" {2};
