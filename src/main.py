@@ -219,7 +219,7 @@ for attribute, value in credentials.__dict__.items():
 
 engine = create_engine(credentials.get_credentials("sqlalchemy"))
 processor = SqlProcessor(engine, SQL_DIRECTORY)
-processor.clear_relations("TABLE", ALL_RELATIONS)
+processor.drop_relations("TABLE", ALL_RELATIONS)
 
 # Add files to PostGIS database -----------------------------------------------
 
@@ -280,7 +280,7 @@ for key in files:
 		files[key].to_postgis(IN_RELATIONS[key], engine, if_exists="replace")
 	except Exception:
 		print(f"{fmt.RED}✘ {key} could not be exported to PostGIS!{fmt.END}")
-		processor.clear_relations("TABLE", ALL_RELATIONS)
+		processor.drop_relations("TABLE", ALL_RELATIONS)
 		sys.exit()
 
 del files
@@ -495,7 +495,7 @@ try:
 	)
 except Exception:
 	print(f"{fmt.RED}✘ Results could not be saved!{fmt.END}")
-	processor.clear_relations("TABLE", ALL_RELATIONS)
+	processor.drop_relations("TABLE", ALL_RELATIONS)
 	sys.exit()
 
 print(f"{fmt.GREEN}✔ Analysis results were saved successfully!{fmt.END}")
@@ -507,7 +507,7 @@ print(f"""
 {fmt.BOLD} Clear workspace...{fmt.END}
 """)
 
-processor.clear_relations("TABLE", ALL_RELATIONS)
+processor.drop_relations("TABLE", ALL_RELATIONS)
 engine.dispose()
 
 print(f"{fmt.GREEN}✔ All done!{fmt.END}\n")
