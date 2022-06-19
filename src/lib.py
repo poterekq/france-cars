@@ -388,7 +388,7 @@ class Credentials:
 				return self.get_sqlalchmy_string()
 			case "psycopg2":
 				return self.get_psycopg2_string()
-			case default:
+			case _:
 				raise ValueError((
 					f"'{backend}' is not a supported backend! "
 					"Use either 'psycopg2' or 'sqlalchemy'."
