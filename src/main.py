@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 # Author: Quentin Poterek
 # Creation date: 12/06/2022
-# Version: 1.0
+# Version: 1.1
 #------------------------------------------------------------------------------
 
 
@@ -26,16 +26,19 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 from lib import *
+from managers import *
 
 
 # -----------------------------------------------------------------------------
 # CLASSES, CONSTANTS AND VARIABLES
 # -----------------------------------------------------------------------------
 
-
 # Terminal formatting
 
-class fmt:
+@dataclass
+class Fmt:
+	"""
+	"""
 	GREEN = '\033[92m'
 	RED = '\033[93m'
 	BOLD = '\033[1m'
@@ -76,7 +79,7 @@ GPKG_LAYERS = {
 # Associate data provider with columns for querying and creating subsets
 
 QUERY_COLUMNS = {
-	"corine": "CODE_12",
+	"corine": "CODE_18",
 	"ign": "nature",
 	"osm": "fclass",
 	"insee": "INSEE_COM",
@@ -100,7 +103,7 @@ QUERY_CATEGORIES = {
 # Input columns to subset
 
 IN_COLUMNS = {
-	"corine": ["ID", "CODE_12", "geometry"],
+	"corine": ["ID", "CODE_18", "geometry"],
 	"equipement_ign": ["cleabs", "nature", "geometry"],
 	"equipement_osm": ["osm_id", "fclass", "geometry"],
 	"troncon_ign": ["cleabs", "nature", "largeur_de_chaussee", 
@@ -157,12 +160,6 @@ RESULT_COLUMNS = [
 	"RaPeArVoiUrb",
 ]
 
-# Information for querying and processing data
-
-DEPARTEMENT = 67
-OFFSET_BUFFER_TRONCON = 2
-TARGET_SRID = 2154
-
 # Get paths for directories
 
 current_directory = path.abspath(getcwd())
@@ -173,13 +170,69 @@ SQL_DIRECTORY = path.join(path.dirname(current_directory),'sql')
 INPUT_DIRECTORY = path.join(path.dirname(current_directory),'input')
 OUTPUT_DIRECTORY = path.join(path.dirname(current_directory), 'output')
 
+# Information for querying and processing data
+
+DEPARTEMENT = int(sys.argv[1])
+OFFSET_BUFFER_TRONCON = 2
+TARGET_SRID = 2154
+
+
+# -----------------------------------------------------------------------------
+# DOWNLOAD AND PREPARE DATA
+# -----------------------------------------------------------------------------
+
+# Prepare information for downloading data ------------------------------------
+
+# Get old region name for downloading from GeoFabrik (OSM)
+
+insee_path = os.path.join(path.dirname(current_directory), "table_insee.csv")
+insee = pd.read_csv(insee_path, sep='\t')
+osm_region = insee[insee["CODE_DPT"]==str(DEPARTEMENT)].OSM_REG.item()
+osm_region = osm_region.lower()
+
+# Additionnal information
+
+DEPARTEMENT_PAD = str(DEPARTEMENT).zfill(3)
+IGN_RELEASE_DATE = "2022-03-15"
+
 # Filenames
 
 FILE_COMMUNE = "COMMUNE.shp"
-FILE_CORINE = "CLC12_FR.shp"
-FILE_IGN = "topo.gpkg"
+FILE_CORINE = "CLC18_FR.shp"
+FILE_IGN = f"BDT_3-0_GPKG_LAMB93_D{DEPARTEMENT_PAD}-ED{IGN_RELEASE_DATE}.gpkg"
 FILE_OSM = "gis_osm_traffic_a_free_1.shp"
 FILE_RESULT = f"analyse_d{DEPARTEMENT}.csv"
+
+# Download data using FileManager ---------------------------------------------
+
+fm = FileManager(INPUT_DIRECTORY)
+
+for f, url, pattern in zip(
+	# Filenames
+	(FILE_COMMUNE, FILE_CORINE, FILE_IGN, FILE_OSM),
+	# URLs
+	(UrlManager.ADMIN.format(IGN_RELEASE_DATE),
+	 UrlManager.CORINE,
+	 UrlManager.BDTOPO.format(DEPARTEMENT_PAD, IGN_RELEASE_DATE),
+	 UrlManager.OSM.format(osm_region)),
+	# Patterns for extracting from archives
+	(r".*[/]COMMUNE[.].*", 
+	 r".*[/]CLC18_FR[.].*",
+	 r".*gpkg$",
+	 r".*traffic_a_free_1[.].*")
+):
+	f_path = os.path.join(INPUT_DIRECTORY, f)
+
+	if exists(f_path):
+		print(f"{f} already exists! It won't be downloaded.")
+	else:
+		archive_name = fm.download_file(url, INPUT_DIRECTORY)
+		fm.extract(
+			os.path.join(INPUT_DIRECTORY, archive_name),
+			INPUT_DIRECTORY,
+			pattern=pattern,
+			delete_zip=True
+		)
 
 
 # -----------------------------------------------------------------------------
@@ -224,7 +277,7 @@ processor.drop_relations("TABLE", ALL_RELATIONS)
 # Add files to PostGIS database -----------------------------------------------
 
 print(f"""
-{fmt.BOLD}Read input files and export to PostGIS database...{fmt.END}
+{Fmt.BOLD}Read input files and export to PostGIS database...{Fmt.END}
 """)
 
 # Read input files
@@ -247,10 +300,10 @@ for key, path_data, layer in zip(
 	try:
 		files[key] = gpd.read_file(path_data, layer=layer)
 	except Exception:
-		print(f"{fmt.RED}✘ {path_data} could not be read!{fmt.END}")
+		print(f"{Fmt.RED}✘ {path_data} could not be read!{Fmt.END}")
 		sys.exit()
 
-print(f"{fmt.GREEN}✔ All files were read successfully!{fmt.END}")
+print(f"{Fmt.GREEN}✔ All files were read successfully!{Fmt.END}")
 
 # Subset input files by rows and columns
 
@@ -271,7 +324,7 @@ for f, provider in zip(
 		OUT_COLUMNS[f]
 	)
 
-print(f"{fmt.GREEN}✔ All files were subsetted successfully!{fmt.END}")
+print(f"{Fmt.GREEN}✔ All files were subsetted successfully!{Fmt.END}")
 
 # Export files to PostGIS database
 
@@ -279,13 +332,13 @@ for key in files:
 	try:
 		files[key].to_postgis(IN_RELATIONS[key], engine, if_exists="replace")
 	except Exception:
-		print(f"{fmt.RED}✘ {key} could not be exported to PostGIS!{fmt.END}")
+		print(f"{Fmt.RED}✘ {key} could not be exported to PostGIS!{Fmt.END}")
 		processor.drop_relations("TABLE", ALL_RELATIONS)
 		sys.exit()
 
 del files
 
-print(f"{fmt.GREEN}✔ Export to PostGIS was successful!{fmt.END}")
+print(f"{Fmt.GREEN}✔ Export to PostGIS was successful!{Fmt.END}")
 
 # Create spatial indexes for tables
 
@@ -295,7 +348,7 @@ for relation in (list(IN_RELATIONS.keys())):
 # Prepare data for analysis ---------------------------------------------------
 
 print(f"""
-{fmt.BOLD} Prepare data for analysis... {fmt.END}
+{Fmt.BOLD} Prepare data for analysis... {Fmt.END}
 """)
 
 print("Set proper SRID, geometry type and dimension.")
@@ -443,12 +496,12 @@ for a, b, field, output in zip(
 ):
 	processor.intersect_geometries(a, b, fields_b=field, out_name=output)
 
-print(f"{fmt.GREEN}✔ Geoprocessing of data was successful!{fmt.END}")
+print(f"{Fmt.GREEN}✔ Geoprocessing of data was successful!{Fmt.END}")
 
 # Extract and export analysis results -----------------------------------------
 
 print(f"""
-{fmt.BOLD} Extract analysis results and compute additional data...{fmt.END}
+{Fmt.BOLD} Extract analysis results and compute additional data...{Fmt.END}
 """)
 
 # Export data from database
@@ -494,20 +547,20 @@ try:
 		sep="\t", index=False
 	)
 except Exception:
-	print(f"{fmt.RED}✘ Results could not be saved!{fmt.END}")
+	print(f"{Fmt.RED}✘ Results could not be saved!{Fmt.END}")
 	processor.drop_relations("TABLE", ALL_RELATIONS)
 	sys.exit()
 
-print(f"{fmt.GREEN}✔ Analysis results were saved successfully!{fmt.END}")
+print(f"{Fmt.GREEN}✔ Analysis results were saved successfully!{Fmt.END}")
 print(f"Path: {path.join(OUTPUT_DIRECTORY, FILE_RESULT)}")
 
 # Cleanup ---------------------------------------------------------------------
 
 print(f"""
-{fmt.BOLD} Clear workspace...{fmt.END}
+{Fmt.BOLD} Clear workspace...{Fmt.END}
 """)
 
 processor.drop_relations("TABLE", ALL_RELATIONS)
 engine.dispose()
 
-print(f"{fmt.GREEN}✔ All done!{fmt.END}\n")
+print(f"{Fmt.GREEN}✔ All done!{Fmt.END}\n")
