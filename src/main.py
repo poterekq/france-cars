@@ -553,6 +553,25 @@ print(f"""
 {Fmt.BOLD}🆑 Clear workspace...{Fmt.END}
 """)
 
+print(
+	"You will be asked whether or not to delete files for BD TOPO and OSM. "
+	"If you're running the analysis at a regional level, it is best to keep "
+	"the OSM files until the end of the analysis. BD ADMIN and CORINE Land "
+	"Cover will be kept as they can be used at a national level. When done, "
+	"you can safely delete these two datasets manually.\n"
+)
+
+for f, pattern in zip(
+	(FILE_IGN, FILE_OSM),
+	(PatternManager.BDTOPO, PatternManager.OSM)
+):
+	choice = input(f"Do you wish to delete {f} and related files [y/N]? ")
+	if choice.lower() == "y":
+		files = fm.find_match_files(INPUT_DIRECTORY, pattern)
+		for _f in files:
+			full_path = os.path.join(INPUT_DIRECTORY, _f)
+			fm.delete(full_path)
+
 processor.drop_relations("TABLE", ALL_RELATIONS)
 engine.dispose()
 
