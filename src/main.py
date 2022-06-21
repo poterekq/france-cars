@@ -33,17 +33,6 @@ from managers import *
 # CLASSES, CONSTANTS AND VARIABLES
 # -----------------------------------------------------------------------------
 
-# Terminal formatting
-
-@dataclass
-class Fmt:
-	"""
-	"""
-	GREEN = '\033[92m'
-	RED = '\033[93m'
-	BOLD = '\033[1m'
-	END = '\033[0m'
-
 # Associate variable name with PostGIS relation name
 
 IN_RELATIONS = {
