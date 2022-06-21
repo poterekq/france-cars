@@ -602,7 +602,7 @@ class SqlProcessor:
 
 	def singlepart_to_multipart(
 		self,
-		relation: str
+		relation: str,
 	) -> None:
 		"""
 		Convert the singlepart features of an input spatial relation to 
@@ -634,12 +634,13 @@ class SqlProcessor:
 		>>> processor.get_geometry_types("communes")
 		('ST_MultiPolygon',)
 		"""
+		srid = self.get_srid(relation)
+
 		self.execute_query(
 			"file",
 			join(self.sql_directory, "singlepart_to_multipart.sql"),
-			relation
+			relation, srid
 		)
-
 
 
 	def get_geometry_types(
@@ -1059,5 +1060,5 @@ class SqlProcessor:
 					relation_type, relation, "CASCADE"
 				)
 			except Exception as e:
-				raise ValueError(f"{relation} could not be dropped!")
 				print(e)
+				raise ValueError(f"{relation} could not be dropped!")
