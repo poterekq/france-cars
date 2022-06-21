@@ -209,10 +209,10 @@ for f, url, pattern in zip(
 	 UrlManager.BDTOPO.format(DEPARTEMENT_PAD, IGN_RELEASE_DATE),
 	 UrlManager.OSM.format(osm_region)),
 	# Patterns for extracting from archives
-	(r".*[/]COMMUNE[.].*", 
-	 r".*[/]CLC18_FR[.].*",
-	 r".*gpkg$",
-	 r".*traffic_a_free_1[.].*")
+	(PatternManager.ADMIN,
+	 PatternManager.CORINE,
+	 PatternManager.BDTOPO,
+	 PatternManager.OSM)
 ):
 	f_path = os.path.join(INPUT_DIRECTORY, f)
 
