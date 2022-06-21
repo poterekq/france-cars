@@ -71,7 +71,8 @@ QUERY_COLUMNS = {
 	"corine": "CODE_18",
 	"ign": "nature",
 	"osm": "fclass",
-	"insee": "INSEE_COM",
+	"insee_com": "INSEE_COM",
+	"insee_dep": "INSEE_DEP",
 	"largeur": "largeur",
 }
 
@@ -161,7 +162,7 @@ OUTPUT_DIRECTORY = path.join(path.dirname(current_directory), 'output')
 
 # Information for querying and processing data
 
-DEPARTEMENT = int(sys.argv[1])
+DEPARTEMENT = sys.argv[1]
 OFFSET_BUFFER_TRONCON = 2
 TARGET_SRID = 2154
 
@@ -176,12 +177,12 @@ TARGET_SRID = 2154
 
 insee_path = os.path.join(path.dirname(current_directory), "table_insee.csv")
 insee = pd.read_csv(insee_path, sep='\t')
-osm_region = insee[insee["CODE_DPT"]==str(DEPARTEMENT)].OSM_REG.item()
+osm_region = insee[insee["CODE_DPT"]==DEPARTEMENT].OSM_REG.item()
 osm_region = osm_region.lower()
 
 # Additionnal information
 
-DEPARTEMENT_PAD = str(DEPARTEMENT).zfill(3)
+DEPARTEMENT_PAD = DEPARTEMENT.zfill(3)
 IGN_RELEASE_DATE = "2022-03-15"
 
 # Filenames
@@ -190,7 +191,7 @@ FILE_COMMUNE = "COMMUNE.shp"
 FILE_CORINE = "CLC18_FR.shp"
 FILE_IGN = f"BDT_3-0_GPKG_LAMB93_D{DEPARTEMENT_PAD}-ED{IGN_RELEASE_DATE}.gpkg"
 FILE_OSM = "gis_osm_traffic_a_free_1.shp"
-FILE_RESULT = f"analyse_d{DEPARTEMENT}.csv"
+FILE_RESULT = f"analyse_d{DEPARTEMENT.zfill(2)}.csv"
 
 # Download data using FileManager ---------------------------------------------
 
@@ -351,7 +352,7 @@ print("Set proper SRID, geometry type and dimension.")
 processor.execute_query(
 	"file",
 	path.join(SQL_DIRECTORY, "delete_where_like.sql"),
-	IN_RELATIONS["commune"], QUERY_COLUMNS["insee"], "97%"
+	IN_RELATIONS["commune"], QUERY_COLUMNS["insee_com"], "97%"
 )
 
 processor.singlepart_to_multipart(IN_RELATIONS["commune"])
@@ -361,9 +362,9 @@ processor.project_geometry(IN_RELATIONS["commune"], TARGET_SRID)
 
 processor.execute_query(
 	"file",
-	path.join(SQL_DIRECTORY, "create_union_where_like.sql"),
+	path.join(SQL_DIRECTORY, "create_union_where_equals.sql"),
 	"VIEW", OUT_RELATIONS["departement"], TARGET_SRID, 
-	IN_RELATIONS["commune"], QUERY_COLUMNS["insee"], f"{DEPARTEMENT}%"
+	IN_RELATIONS["commune"], QUERY_COLUMNS['insee_dep'], DEPARTEMENT.zfill(2)
 )
 
 # Project OpenStreetMap data into target SRID
@@ -457,7 +458,7 @@ for a, b, field, output in zip(
 	[OUT_RELATIONS["espace_voiture"], 
 	 IN_RELATIONS["troncon_ign"]],
 #	Fields (a)
-	[[QUERY_COLUMNS["insee"]]] * 2,
+	[[QUERY_COLUMNS["insee_com"]]] * 2,
 #	Output names
 	[OUT_RELATIONS["espace_voiture_commune"], 
 	 OUT_RELATIONS["troncon_ign_commune"]]
@@ -469,7 +470,7 @@ for a, b, field, output in zip(
 processor.intersect_geometries(
 	IN_RELATIONS["commune"], 
 	OUT_RELATIONS["tache_urbaine"],
-	fields_a=[QUERY_COLUMNS["insee"]],
+	fields_a=[QUERY_COLUMNS["insee_com"]],
 	out_name=OUT_RELATIONS["tache_urbaine_commune"]
 )
 
@@ -482,7 +483,7 @@ for a, b, field, output in zip(
 	[OUT_RELATIONS["espace_voiture_commune"], 
 	 OUT_RELATIONS["troncon_ign_commune"]],
 #	Fields (a)
-	[[QUERY_COLUMNS["insee"]]] * 2,
+	[[QUERY_COLUMNS["insee_com"]]] * 2,
 #	Output names
 	[OUT_RELATIONS["espace_voiture_urbain"],
 	 OUT_RELATIONS["troncon_ign_urbain"]]
@@ -503,9 +504,9 @@ result = processor.execute_query(
 	"file",
 	path.join(SQL_DIRECTORY, "get_result.sql"),
 	IN_RELATIONS["commune"], 
-	QUERY_COLUMNS["insee"], 
+	QUERY_COLUMNS["insee_com"], 
 	OUT_RELATIONS["espace_voiture_commune"],
-	DEPARTEMENT,
+	DEPARTEMENT.zfill(2),
 	OUT_RELATIONS["troncon_ign_commune"],
 	OUT_RELATIONS["tache_urbaine_commune"],
 	OUT_RELATIONS["espace_voiture_urbain"],
