@@ -194,6 +194,10 @@ FILE_RESULT = f"analyse_d{DEPARTEMENT}.csv"
 
 # Download data using FileManager ---------------------------------------------
 
+print(f"""
+{Fmt.BOLD}📦 Download data...{Fmt.END}
+""")
+
 fm = FileManager(INPUT_DIRECTORY)
 
 for f, url, pattern in zip(
@@ -266,7 +270,7 @@ processor.drop_relations("TABLE", ALL_RELATIONS)
 # Add files to PostGIS database -----------------------------------------------
 
 print(f"""
-{Fmt.BOLD}Read input files and export to PostGIS database...{Fmt.END}
+{Fmt.BOLD}💿 Read input files and export to PostGIS database...{Fmt.END}
 """)
 
 # Read input files
@@ -337,7 +341,7 @@ for relation in (list(IN_RELATIONS.keys())):
 # Prepare data for analysis ---------------------------------------------------
 
 print(f"""
-{Fmt.BOLD} Prepare data for analysis... {Fmt.END}
+{Fmt.BOLD}🔧 Process data before actual analysis... {Fmt.END}
 """)
 
 print("Set proper SRID, geometry type and dimension.")
@@ -485,12 +489,12 @@ for a, b, field, output in zip(
 ):
 	processor.intersect_geometries(a, b, fields_b=field, out_name=output)
 
-print(f"{Fmt.GREEN}✔ Geoprocessing of data was successful!{Fmt.END}")
+print(f"\n{Fmt.GREEN}✔ Geoprocessing of data was successful!{Fmt.END}")
 
 # Extract and export analysis results -----------------------------------------
 
 print(f"""
-{Fmt.BOLD} Extract analysis results and compute additional data...{Fmt.END}
+{Fmt.BOLD}🔍 Analyze data and compute additional features...{Fmt.END}
 """)
 
 # Export data from database
@@ -541,15 +545,15 @@ except Exception:
 	sys.exit()
 
 print(f"{Fmt.GREEN}✔ Analysis results were saved successfully!{Fmt.END}")
-print(f"Path: {path.join(OUTPUT_DIRECTORY, FILE_RESULT)}")
+print(f"Path: {path.join(OUTPUT_DIRECTORY, FILE_RESULT)}\n")
 
 # Cleanup ---------------------------------------------------------------------
 
 print(f"""
-{Fmt.BOLD} Clear workspace...{Fmt.END}
+{Fmt.BOLD}🆑 Clear workspace...{Fmt.END}
 """)
 
 processor.drop_relations("TABLE", ALL_RELATIONS)
 engine.dispose()
 
-print(f"{Fmt.GREEN}✔ All done!{Fmt.END}\n")
+print(f"\n{Fmt.GREEN}✔ All done!{Fmt.END}\n")
