@@ -193,6 +193,21 @@ FILE_IGN = f"BDT_3-0_GPKG_LAMB93_D{DEPARTEMENT_PAD}-ED{IGN_RELEASE_DATE}.gpkg"
 FILE_OSM = "gis_osm_traffic_a_free_1.shp"
 FILE_RESULT = f"analyse_d{DEPARTEMENT.zfill(2)}.csv"
 
+# Setup environment -----------------------------------------------------------
+
+# Prepare working directories and paths
+
+for directory in (INPUT_DIRECTORY, OUTPUT_DIRECTORY):
+	if not exists(directory):
+		mkdir(directory)
+
+PATH_COMMUNE = path.join(INPUT_DIRECTORY, FILE_COMMUNE)
+PATH_CORINE = path.join(INPUT_DIRECTORY, FILE_CORINE)
+PATH_IGN = path.join(INPUT_DIRECTORY, FILE_IGN)
+PATH_OSM = path.join(INPUT_DIRECTORY, FILE_OSM)
+
+check_files(PATH_COMMUNE, PATH_CORINE, PATH_IGN, PATH_OSM)
+
 # Download data using FileManager ---------------------------------------------
 
 print(f"""
@@ -225,28 +240,13 @@ for f, url, pattern in zip(
 			os.path.join(INPUT_DIRECTORY, archive_name),
 			INPUT_DIRECTORY,
 			pattern=pattern,
-			delete_zip=True
+			delete_archive=True
 		)
 
 
 # -----------------------------------------------------------------------------
 # PROCEDURE
 # -----------------------------------------------------------------------------
-
-# Setup environment -----------------------------------------------------------
-
-# Prepare working directories and paths
-
-for directory in (INPUT_DIRECTORY, OUTPUT_DIRECTORY):
-	if not exists(directory):
-		mkdir(directory)
-
-PATH_COMMUNE = path.join(INPUT_DIRECTORY, FILE_COMMUNE)
-PATH_CORINE = path.join(INPUT_DIRECTORY, FILE_CORINE)
-PATH_IGN = path.join(INPUT_DIRECTORY, FILE_IGN)
-PATH_OSM = path.join(INPUT_DIRECTORY, FILE_OSM)
-
-check_files(PATH_COMMUNE, PATH_CORINE, PATH_IGN, PATH_OSM)
 
 # Get credentials for connecting to PostGIS database
 
