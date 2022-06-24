@@ -248,10 +248,10 @@ for f, url, pattern in zip(
 
 # Get credentials for connecting to PostGIS database
 
-print("""
-Please, provide information for creating a connection to 
-your PostGIS database, where data will be stored and processed.
-""")
+print(
+	"Please, provide information for creating a connection to "
+	"your PostGIS database, where data will be stored and processed."
+)
 
 credentials = Credentials()
 
@@ -293,7 +293,8 @@ for key, path_data, layer in zip(
 ):
 	try:
 		files[key] = gpd.read_file(path_data, layer=layer)
-	except Exception:
+	except Exception as e:
+		print(e)
 		print(f"{Fmt.RED}✘ {path_data} could not be read!{Fmt.END}")
 		sys.exit()
 
@@ -325,7 +326,8 @@ print(f"{Fmt.GREEN}✔ All files were subsetted successfully!{Fmt.END}")
 for key in files:
 	try:
 		files[key].to_postgis(IN_RELATIONS[key], engine, if_exists="replace")
-	except Exception:
+	except Exception as e:
+		print(e)
 		print(f"{Fmt.RED}✘ {key} could not be exported to PostGIS!{Fmt.END}")
 		processor.drop_relations("TABLE", ALL_RELATIONS)
 		sys.exit()
@@ -540,7 +542,8 @@ try:
 		path.join(OUTPUT_DIRECTORY, FILE_RESULT), 
 		sep="\t", index=False
 	)
-except Exception:
+except Exception as e:
+	print(e)
 	print(f"{Fmt.RED}✘ Results could not be saved!{Fmt.END}")
 	processor.drop_relations("TABLE", ALL_RELATIONS)
 	sys.exit()
