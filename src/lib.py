@@ -21,19 +21,21 @@ import geopandas as gpd
 import sqlalchemy
 
 
-def flatten(lists: Iterable) -> Iterable:
+def flatten(
+	lists: Iterable
+) -> Iterable:
 	"""
 	Flatten a list of lists into a single non-nested list.
 
 	Parameters
 	----------
-		lists: iterable
-			List of lists.
+	lists : iterable
+		List of lists.
 	
 	Returns
 	-------
-		iterable
-			Flattened non-nested list.
+	iterable
+		Flattened non-nested list.
 	
 	Examples
 	--------
@@ -57,12 +59,13 @@ def check_files(
 
 	Parameters
 	----------
-		args : str or iterable of str
-			Files to be looked for on the system.
+	args : str or iterable of str
+		Files to be looked for on the system.
 	
 	Raises
 	------
-		FileNotFoundError: If one of the provided files is not found.
+	FileNotFoundError
+		If one of the provided files is not found.
 
 	Examples
 	--------
@@ -87,18 +90,17 @@ def extract_features(
 
 	Parameters
 	----------
-		gdf : GeoDataFrame
-			GeoPandas dataframe from which features are to be extracted.
-		attribute : str
-			Attribute used for extracting features.
-		values : iterable of str
-			List of valid values that the features' attribute should 
-			match.
+	gdf : GeoDataFrame
+		GeoPandas dataframe from which features are to be extracted.
+	attribute : str
+		Attribute used for extracting features.
+	values : iterable of str
+		List of valid values that the features' attribute should match.
 	
 	Returns
 	-------
-		GeoDataFrame
-			GeoPandas dataframe with extracted features.
+	GeoDataFrame
+		GeoPandas dataframe with extracted features.
 	
 	Examples
 	--------
@@ -134,18 +136,18 @@ def subset_columns(
 
 	Parameters
 	----------
-		gdf : GeoDataFrame
-			GeoPandas dataframe to subset.
-		src_columns : iterable of str
-			Original names of the columns to be extracted.
-		tgt_columns : iterable of str, optional
-			Replacement names for those provided in `src_columns`.
-			They should be in the same order as that of `src_columns`.
+	gdf : GeoDataFrame
+		GeoPandas dataframe to subset.
+	src_columns : iterable of str
+		Original names of the columns to be extracted.
+	tgt_columns : iterable of str, optional
+		Replacement names for those provided in `src_columns`. They 
+		should be in the same order as that of `src_columns`.
 	
 	Returns
 	-------
-		GeoDataFrame
-			GeoPandas dataframe with the selected columns.
+	GeoDataFrame
+		GeoPandas dataframe with the selected columns.
 	
 	Examples
 	--------
@@ -196,13 +198,13 @@ def has_single_geometry_type(
 
 	Parameters
 	----------
-		geometry_type : iterable of str
-			Tuple containing geometry type(s).
+	geometry_type : iterable of str
+		Tuple containing geometry type(s).
 	
 	Returns
 	-------
-		bool
-			Whether or not the tuple contains a single geometry type.
+	bool
+		Whether or not the tuple contains a single geometry type.
 	
 	Examples
 	--------
@@ -235,15 +237,15 @@ def convert_st_to_type(
 
 	Parameters
 	----------
-		geometry : str
-			String containing a PostGIS geometry type. 
-		allow_multi : bool, default True
-			Whether or not to allow multipart geometry.
+	geometry : str
+		String containing a PostGIS geometry type. 
+	allow_multi : bool, default True
+		Whether or not to allow multipart geometry.
 	
 	Returns
 	-------
-		str
-			A generic geometry type.
+	str
+		A generic geometry type.
 	
 	Examples
 	--------
@@ -287,16 +289,16 @@ class Credentials:
 
 	Attributes
 	---------- 
-		host : str, default "localhost"
-			The host for the database.
-		user : str, default "postgres"
-			The user to connect to the database.
-		password: str, default "postgres"
-			The password used for connecting the user to the database.
-		database : str, default "geodata"
-			The database to connect to.
-		port : str, default "5432"
-			The port used for accessing the database.
+	host : str, default "localhost"
+		The host for the database.
+	user : str, default "postgres"
+		The user to connect to the database.
+	password: str, default "postgres"
+		The password used for connecting the user to the database.
+	database : str, default "geodata"
+		The database to connect to.
+	port : str, default "5432"
+		The port used for accessing the database.
 	
 	Methods
 	-------
@@ -314,15 +316,17 @@ class Credentials:
 	port: str = "5432"
 
 
-	def get_psycopg2_string(self) -> str:
+	def get_psycopg2_string(
+		self
+	) -> str:
 		"""
 		Return a formatted string for connecting to a PostgreSQL
 		database using psycopg2.
 
 		Returns
 		-------
-			str
-				A formatted string ready to be passed to psycopg2.
+		str
+			A formatted string ready to be passed to psycopg2.
 		"""
 		return (f"user={self.user} "
 		        f"password={self.password} "
@@ -331,15 +335,17 @@ class Credentials:
 				f"dbname={self.database}")
 
 
-	def get_sqlalchmy_string(self) -> str:
+	def get_sqlalchmy_string(
+		self
+	) -> str:
 		"""
 		Return a formatted string for connecting to a PostgreSQL
 		database using sqlalchemy.
 
 		Returns
 		-------
-			str
-				A formatted string ready to be passed to sqlalchemy.
+		str
+			A formatted string ready to be passed to sqlalchemy.
 		"""
 		return ("postgresql://"
 		        f"{self.user}"
@@ -349,27 +355,31 @@ class Credentials:
 				f"/{self.database}")
 
 
-	def get_credentials(self, backend: str = "sqlalchemy") -> str:
+	def get_credentials(
+		self, 
+		backend: str = "sqlalchemy"
+	) -> str:
 		"""
 		Return a formatted string for connecting to a PostgreSQL 
 		database.
 
 		Parameters
 		----------
-			backend : str, default "sqlalchemy"
-				The backend technology used for getting acces to a 
-				PostgreSQL session. Supported values are "psycopg2" and
-				"sqlalchemy".
+		backend : str, default "sqlalchemy"
+			The backend technology used for getting acces to a 
+			PostgreSQL session. Supported values are "psycopg2" and
+			"sqlalchemy".
 
 		Returns
 		-------
-			str
-				A formatted string ready to be passed to a PostgreSQL
-				session manager for connecting to a database.
+		str
+			A formatted string ready to be passed to a PostgreSQL
+			session manager for connecting to a database.
 		
 		Raises
 		------
-			ValueError: If the provided backend is not supported. 
+		ValueError
+			If the provided backend is not supported. 
 			Supported backends are psycopg2 and sqlalchemy.
 		
 		Examples
@@ -410,11 +420,11 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			engine : sqlalchemy.engine.base.Engine
-				Valid sqlalchemy engine for connecting to a PostGIS
-				database.
-			sql_directory : str, optional
-				Absolute path where SQL queries are stored.
+		engine : sqlalchemy.engine.base.Engine
+			Valid sqlalchemy engine for connecting to a PostGIS
+			database.
+		sql_directory : str, optional
+			Absolute path where SQL queries are stored.
 		"""
 		self.engine = engine
 		self.sql_directory = sql_directory
@@ -432,20 +442,22 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			mode : str
-				Specify whether the query is distributed as a string
-				(string mode) or as a file to read (file mode). This
-				parameter can take the following values: file, string.
-			query : str
-			parameters : iterable of str, int, float
-				Parameters used for formatting the SQL query.
+		mode : str
+			Specify whether the query is distributed as a string
+			(string mode) or as a file to read (file mode). This
+			parameter can take the following values: file, string.
+		query : str
+		parameters : iterable of str, int, float
+			Parameters used for formatting the SQL query.
 		
 		Raises
 		------
-			ValueError : If the provided mode is not supported. 
-				Supported modes are "file" and "string".
-			ValueError : If a query is executed in `file` mode while
-				`sql_directory = None`.
+		ValueError
+			If the provided mode is not supported. Supported modes are 
+			`file` and `string`.
+		ValueError
+			If a query is executed in `file` mode while 
+			`sql_directory = None`.
 
 		Examples
 		--------
@@ -516,13 +528,13 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to get the SRID.
+		relation : str
+			Name of the relation for which to get the SRID.
 		
 		Returns
 		-------
-			int
-				SRID of the provided relation.
+		int
+			SRID of the provided relation.
 
 		Examples
 		--------
@@ -554,16 +566,16 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation_a : str
-				Name of a spatial relation.
-			relation_b : str
-				Name of a spatial relation.
+		relation_a : str
+			Name of a spatial relation.
+		relation_b : str
+			Name of a spatial relation.
 		
 		Returns
 		-------
-			bool
-				Return `True` if both relations share the same SRID,
-				`False` otherwise.
+		bool
+			Return `True` if both relations share the same SRID, `False`
+			otherwise.
 		"""
 		srid_a = self.get_srid(relation_a)
 		srid_b = self.get_srid(relation_b)
@@ -580,8 +592,8 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to create an index.
+		relation : str
+			Name of the relation for which to create an index.
 		
 		Examples
 		--------
@@ -610,9 +622,9 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to convert singlepart 
-				features to multipart features.
+		relation : str
+			Name of the relation for which to convert singlepart 
+			features to multipart features.
 		
 		Examples
 		--------
@@ -652,14 +664,14 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to get geometry types.
+		relation : str
+			Name of the relation for which to get geometry types.
 
 		Returns
 		-------
-			iterable of str
-				Iterable storing the distinct geometry types found in a
-				spatial relation.
+		iterable of str
+			Iterable storing the distinct geometry types found in a
+			spatial relation.
 		
 		Examples
 		--------
@@ -691,24 +703,24 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Spatial relation from which to get and convert the 
-				geometry type.
-			allow_multi : bool, default True
-				Whether or not to allow multipart geometries. If `False`
-				the multipart geometry type is converted to its
-				singlepart equivalent.
+		relation : str
+			Spatial relation from which to get and convert the geometry 
+			type.
+		allow_multi : bool, default True
+			Whether or not to allow multipart geometries. If `False`
+			the multipart geometry type is converted to its singlepart 
+			equivalent.
 		
 		Returns
 		-------
-			str
-				Generic geometric, converted from a PostGIS geometry
-				type.
+		str
+			Generic geometric, converted from a PostGIS geometry type.
 		
 		Raises
 		------
-			ValueError : When a spatial relation has more than one
-				distinct geometry type.
+		ValueError
+			When a spatial relation has more than one distinct geometry
+			type.
 		
 		Examples
 		--------
@@ -758,10 +770,10 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to get the SRID.
-			srid : str or int
-				Target SRID.
+		relation : str
+			Name of the relation for which to get the SRID.
+		srid : str or int
+			Target SRID.
 		
 		Examples
 		--------
@@ -802,9 +814,9 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation : str
-				Name of the relation for which to remove the third 
-				dimension.
+		relation : str
+			Name of the relation for which to remove the third 
+			dimension.
 		
 		Examples
 		--------
@@ -843,26 +855,25 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation_a : str
-				Relation containing geometries to intersect with
-				`relation_b`.
-			relation_b : str
-				Relation containing geometries to intersect with
-				`relation_a`.
-			fields_a : iterable of str
-				Fields of relation_a to pass to the intersection result.
-			fields_b : iterable of str
-				Fields of relation_b to pass to the intersection result.
-			as_view : bool, default False
-				Whether or not to create a view. When `False`, a table
-				is created. When `True`, a view is created.
-			out_name : str, optional
-				Name of the relation to create. By default, `relation_b`
-				is replaced with the intersection result.
-			build_index : bool, default True
-				Whether or not to build a spatial index for the
-				intersection result. The option is not available for
-				views.
+		relation_a : str
+			Relation containing geometries to intersect with
+			`relation_b`.
+		relation_b : str
+			Relation containing geometries to intersect with
+			`relation_a`.
+		fields_a : iterable of str
+			Fields of relation_a to pass to the intersection result.
+		fields_b : iterable of str
+			Fields of relation_b to pass to the intersection result.
+		as_view : bool, default False
+			Whether or not to create a view. When `False`, a table is 
+			created. When `True`, a view is created.
+		out_name : str, optional
+			Name of the relation to create. By default, `relation_b` is
+			replaced with the intersection result.
+		build_index : bool, default True
+			Whether or not to build a spatial index for the intersection
+			result. The option is not available for views.
 		
 		Examples
 		--------
@@ -965,21 +976,20 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation_a : str
-				Relation containing geometries to aggregate with 
-				`relation_b`.
-			relation_b : str
-				Relation containing geometries to aggregate with 
-				`relation_a`.
-			out_name : str
-				Name of the relation to create.
-			as_view : bool, default False
-				Whether or not to create a view. When False, a table is 
-				created. When True, a view is created.
-			build_index : bool, default True
-				Whether or not to build a spatial index for the 
-				aggregation result. The option is not available for 
-				views.
+		relation_a : str
+			Relation containing geometries to aggregate with 
+			`relation_b`.
+		relation_b : str
+			Relation containing geometries to aggregate with 
+			`relation_a`.
+		out_name : str
+			Name of the relation to create.
+		as_view : bool, default False
+			Whether or not to create a view. When False, a table is 
+			created. When True, a view is created.
+		build_index : bool, default True
+			Whether or not to build a spatial index for the aggregation
+			result. The option is not available for views.
 		
 		Examples
 		--------
@@ -1024,17 +1034,19 @@ class SqlProcessor:
 
 		Parameters
 		----------
-			relation_type : str
-				Specify whether the relations are `TABLE`s or `VIEW`s.
-			relations : iterable of str
-				Relations to drop.
+		relation_type : str
+			Specify whether the relations are `TABLE`s or `VIEW`s.
+		relations : iterable of str
+			Relations to drop.
 		
 		Raises
 		------
-			ValueError : The provided `relation_type` is invalid.
-				Supported values are `TABLE` and `VIEW`.
-			ValueError : A relation could not be dropped. In this case,
-				sqlalchemy's error is caught and displayed to the user.
+		ValueError
+			The provided `relation_type` is invalid. Supported values 
+			are `TABLE` and `VIEW`.
+		ValueError
+			A relation could not be dropped. In this case, sqlalchemy's 
+			error is caught and displayed to the user.
 
 		Examples
 		--------
