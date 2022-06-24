@@ -206,8 +206,6 @@ PATH_CORINE = path.join(INPUT_DIRECTORY, FILE_CORINE)
 PATH_IGN = path.join(INPUT_DIRECTORY, FILE_IGN)
 PATH_OSM = path.join(INPUT_DIRECTORY, FILE_OSM)
 
-check_files(PATH_COMMUNE, PATH_CORINE, PATH_IGN, PATH_OSM)
-
 # Download data using FileManager ---------------------------------------------
 
 print(f"""
@@ -274,7 +272,9 @@ print(f"""
 {Fmt.BOLD}💿 Read input files and export to PostGIS database...{Fmt.END}
 """)
 
-# Read input files
+# Check if input files and read them
+
+check_files(PATH_COMMUNE, PATH_CORINE, PATH_IGN, PATH_OSM)
 
 files = IN_RELATIONS.copy()
 
