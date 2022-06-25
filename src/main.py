@@ -93,7 +93,7 @@ QUERY_CATEGORIES = {
 # Input columns to subset
 
 IN_COLUMNS = {
-	"corine": ["ID", "CODE_18", "geometry"],
+	"corine": ["id", "code_18", "geometry"],
 	"equipement_ign": ["cleabs", "nature", "geometry"],
 	"equipement_osm": ["osm_id", "fclass", "geometry"],
 	"troncon_ign": ["cleabs", "nature", "largeur_de_chaussee", 

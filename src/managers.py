@@ -40,10 +40,10 @@ class UrlManager:
 	)
 
 	CORINE = (
-		"ftp://Corine_Land_Cover_ext:"
-		"ishiteimapie9ahP@"
-		"ftp3.ign.fr/"
-		"CLC18_SHP__FRA_2019-08-21.7z"
+		"http://data.cquest.org/"
+		"corine_land_cover/"
+		"fr/"
+		"CLC18_SHP__FRA_2018-11-16.7z"
 	)
 
 	# {0}: three-character long department INSEE number
