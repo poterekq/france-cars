@@ -68,7 +68,7 @@ GPKG_LAYERS = {
 # Associate data provider with columns for querying and creating subsets
 
 QUERY_COLUMNS = {
-	"corine": "CODE_18",
+	"corine": "code_18",
 	"ign": "nature",
 	"osm": "fclass",
 	"insee_com": "INSEE_COM",
